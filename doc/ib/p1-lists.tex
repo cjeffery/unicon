@@ -94,12 +94,18 @@ When a list is created, either by
 \noindent there is only one list-element block. Other list-element
 blocks may be added to the chain as the result of pushs or puts.
 
-List-element blocks have a minimum number of slots. This allows some
+List-element blocks created by enumeration (or a call to the \texttt{list}
+function with an integer first parameter) have a minimum number of slots.
+This allows some
 expansion room for adding elements to lists, such as the empty list, that
 are small initially. The minimum number of slots is given by
 \texttt{MinListSlots}, which normally is eight. In the examples that
 follow, the value of \texttt{MinListSlots} is assumed to be four in order
 to keep the diagrams to a manageable size.
+Note that is possible to create a list element block with fewer slots --
+for example by sorting a record {\color{blue}or converting a set to a list
+(Unicon only)} -- in the limit, the List-element block can have no slots
+at all.
 
 The code for the list function is
 
@@ -185,18 +191,20 @@ of evaluating
 \put(130,64){\trboxlabel{slot 1}}
 \put(130,96){\dvbox{integer}{n}{4}}
 \put(130,96){\trboxlabel{slot 0}}
-\put(130,128){\nullptrbox{next list-element block}}
+\put(130,128){\hdrnullptrbox{next list-element block}}
 {\color{blue}
 \put(-10,136){\parbox{100pt}{Unicon replaces the null pointer used by Icon
     with a pointer to the list header block.}}
-\multiput(100,136)(4,0){30}{\line(1,0){2}}
+\multiput(100,136)(4,0){24}{\line(1,0){2}}
+\multiput(100,152)(4,0){24}{\line(1,0){2}}
 \put(370,136){\line(1,0){50}}
+\put(380,152){\line(1,0){40}}
 \put(420,136){\line(0,1){214}}
 \put(420,350){\vector(-1,0){150}}
 \put(270,350){\line(-1,0){154}}
 \put(116,350){\vector(0,-1){22}}
 }
-\put(130,144){\nullptrbox{previous list-element block}}
+\put(130,144){\hdrnullptrbox{previous list-element block}}
 \begin{picture}(0,0)(0,32)
 \put(130,192){\blkbox{0}{1}}
 \put(130,192){\rightboxlabels{first slot used}{number of slots used}}
@@ -312,8 +320,8 @@ The effect on the list-header block and list-element block is:
 \put(130,96){\dvbox{integer}{n}{4}}
 \put(130,96){\trboxlabel{slot 0}}
 \end{picture}
-\put(130,160){\nullptrbox{next list-element block}}
-\put(130,176){\nullptrbox{previous list-element block}}
+\put(130,160){\hdrnullptrbox{next list-element block}}
+\put(130,176){\hdrnullptrbox{previous list-element block}}
 \put(130,192){\blkbox{0}{2}}
 \put(130,192){\rightboxlabels{first slot used}{number of slots used}}
 \put(130,224){\blkbox{60}{4}}
@@ -329,12 +337,13 @@ The effect on the list-header block and list-element block is:
 \put(0,288){\brboxlabel{number of elements in the list}}
 {\color{blue}
 \put(366,168){\line(1,0){60}}
+\put(376,184){\line(1,0){50}}
 \put(426,168){\line(0,1){160}}
 \put(426,328){\vector(-1,0){130}}
 \put(296,328){\line(-1,0){316}}
 \put(-20,328){\line(0,-1){16}}
 \put(-20,312){\vector(1,0){20}}
-\multiput(130,168)(4,0){23}{\line(1,0){2}}
+\multiput(130,168)(4,0){16}{\line(1,0){2}}
 \put(130,160){\blboxlabel{(Unicon) pointer to list header}}
 }
 \end{picture}
@@ -365,8 +374,8 @@ list-element block. The result is
 \put(130,96){\dvbox{integer}{n}{4}}
 \put(130,96){\trboxlabel{slot 0}}
 \end{picture}
-\put(130,160){\nullptrbox{next list-element block}}
-\put(130,176){\nullptrbox{previous list-element block}}
+\put(130,160){\hdrnullptrbox{next list-element block}}
+\put(130,176){\hdrnullptrbox{previous list-element block}}
 \put(130,192){\blkbox{3}{3}}
 \put(130,192){\rightboxlabels{first slot used}{number of slots used}}
 \put(130,224){\blkbox{60}{4}}
@@ -382,12 +391,13 @@ list-element block. The result is
 \put(0,288){\brboxlabel{number of elements in the list}}
 {\color{blue}
 \put(366,168){\line(1,0){60}}
+\put(376,184){\line(1,0){50}}
 \put(426,168){\line(0,1){160}}
 \put(426,328){\vector(-1,0){130}}
 \put(296,328){\line(-1,0){316}}
 \put(-20,328){\line(0,-1){16}}
 \put(-20,312){\vector(1,0){20}}
-\multiput(126,168)(4,0){23}{\line(1,0){2}}
+\multiput(126,168)(4,0){16}{\line(1,0){2}}
 \put(126,160){\blboxlabel{(Unicon) pointer to list header}}
 }
 \end{picture}
@@ -477,7 +487,7 @@ memory. For example, following evaluation of
 \put(130,64){\trboxlabel{slot 1}}
 \put(130,96){\dvbox{integer}{n}{4}}
 \put(130,96){\trboxlabel{slot 0}}
-\put(130,128){\nullptrbox{next list-element block}}
+\put(130,128){\hdrnullptrbox{next list-element block}}
 \put(310,144){\ruptr{24}{104}}
 \put(130,144){\wordboxptr{30}{previous list-element block}}
 \put(130,160){\blkbox{2}{4}}
@@ -629,7 +639,7 @@ the list elements are 2, 3, 4, and 5. The resulting structures are
 \put(130,64){\trboxlabel{slot 1}}
 \put(130,96){\dvbox{integer}{n}{4}}
 \put(130,96){\trboxlabel{slot 0}}
-\put(130,128){\nullptrbox{next list-element block}}
+\put(130,128){\hdrnullptrbox{next list-element block}}
 \put(310,144){\ruptr{24}{104}}
 \put(130,144){\wordboxptr{30}{previous list-element block}}
 \put(130,160){\blkbox{2}{4}}
@@ -679,8 +689,8 @@ block is removed from the chain:
 \put(130,64){\trboxlabel{slot 1}}
 \put(130,96){\dvbox{integer}{n}{4}}
 \put(130,96){\trboxlabel{slot 0}}
-\put(130,128){\nullptrbox{next list-element block}}
-\put(130,144){\nullptrbox{previous list-element block}}
+\put(130,128){\hdrnullptrbox{next list-element block}}
+\put(130,144){\hdrnullptrbox{previous list-element block}}
 %% \put(130,128){\dvbox{null}{n}{0}}
 %% \put(130,128){\trboxlabel{next list-element block}}
 %% \put(130,160){\dvbox{null}{n}{0}}
@@ -793,8 +803,8 @@ points indirectly to the descriptor for the value 5:
 \put(140,64){\trboxlabel{slot 1}}
 \put(140,96){\dvbox{integer}{n}{4}}
 \put(140,96){\trboxlabel{slot 0}}
-\put(140,128){\nullptrbox{next list-element block}}
-\put(140,144){\nullptrbox{previous list-element block}}
+\put(140,128){\hdrnullptrbox{next list-element block}}
+\put(140,144){\hdrnullptrbox{previous list-element block}}
 \put(140,160){\blkbox{3}{3}}
 \put(140,160){\rightboxlabels{first slot used}{number of slots used}}
 \put(140,192){\blkbox{60}{4}}
@@ -807,7 +817,7 @@ points indirectly to the descriptor for the value 5:
 \multiput(120,88)(4,0){4}{\line(1,0){2}}
 \put(136,88){\vector(1,0){4}}
 {\color{blue}
-\multiput(126,136)(4,0){26}{\line(1,0){2}}
+\multiput(126,136)(4,0){19}{\line(1,0){2}}
 \put(126,128){\blboxlabel{(Unicon) pointer to list header}}
 }
 \end{picture}

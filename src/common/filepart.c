@@ -47,7 +47,7 @@ static char *tryfile	(char *buf, char *dir, char *name, char *extn);
 #if UNIX
    #define Prefix "/"
    #define FileSep '/'
-   #define PathSep " :"
+   #define PathSep " ;"
 #endif					/* UNIX */
 
 #if VMS
@@ -63,7 +63,7 @@ static char *tryfile	(char *buf, char *dir, char *name, char *extn);
 #endif					/* DefPath */
 
 #ifndef PathSep
-   #define PathSep " "
+   #define PathSep " ;"
 #endif					/* PathSep */
 
 static char *last_vetted_path;
@@ -427,6 +427,7 @@ int pathOpenHandle(char *fname, char *mode)
  */
 char *lognam;
 FILE *flog;
+char tmplognam[128];
 
 void openlog(char *p)
 {

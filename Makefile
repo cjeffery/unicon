@@ -4,8 +4,12 @@
 #  configuration parameters
 VERSION=13.1
 name=unspecified
-REPO_REV_COUNT="$(shell LC_ALL=C git rev-list --count HEAD )"
+IPATH=
+LPATH=
+
+REPO_REV_COUNT="$(shell LC_ALL=C git rev-list --first-parent --count HEAD )"
 REPO_REV_HASH="$(shell LC_ALL=C git rev-parse --short HEAD)"
+REPO_REV="$(REPO_REV_COUNT)-$(REPO_REV_HASH)"
 
 SHELL=sh
 SHTOOL=./shtool
@@ -24,7 +28,7 @@ unicwd=`basename \`pwd\``
 
 
 default: allsrc
-	$(MAKE) -C ipl/lib 
+	$(MAKE) -C ipl/lib
 	$(MAKE) -C uni
 	$(MAKE) -C plugins
 	@echo ========== Build Summary ==========
@@ -45,14 +49,14 @@ Makedefs: Makedefs.in configure
 #	autoreconf -i
 
 config: configure
-	sh configure	
+	sh configure
 
 help:
 	@echo
 	@echo Unicon Build Instructions:
 	@echo
 	@echo Platform
-	@echo "  UNIX:" 
+	@echo "  UNIX:"
 	@echo "      Run \"./configure\""
 	@echo
 	@echo "  Windows:"
@@ -60,7 +64,7 @@ help:
 	@echo "      GCC : Run \"make NT-Configure-GCC\" or \"make W-Configure-GCC\"."
 	@echo "            For a fully-automated build Run \"make WUnicon\" ."
 	@echo "            Autoconf:"
-	@echo "            sh configure --build=i686-w64-mingw32 when building 32-bit" 
+	@echo "            sh configure --build=i686-w64-mingw32 when building 32-bit"
 	@echo "            sh configure --build=x86_64-w64-mingw32 when building 64-bit"
 	@echo ""
 	@echo "All: after configuration, run \"make (or nmake) Unicon\"."
@@ -164,7 +168,7 @@ NT-Configure-GCC:
 		@echo Then run "make Unicon" to build
 
 ##################################################################
-# 
+#
 # This is used utilize the ncurses-based tool to build Unicon
 # make build name=xxxx
 
@@ -306,7 +310,7 @@ install Install:
 #	docs and man
 	@echo "Installing $(DESTDIR)$(mandir)/man1/unicon.1 ..."
 	@$(INST) -m 644 doc/unicon/unicon.1 $(DESTDIR)$(mandir)/man1/
-	@$(INST) -m 644 README $(DESTDIR)$(docdir)/unicon
+	@$(INST) -m 644 README.md $(DESTDIR)$(docdir)/unicon
 	@echo "Installing $(DESTDIR)$(docdir)/unicon ..."
 	@$(INST) -m 644 doc/unicon/*.* $(DESTDIR)$(docdir)/unicon
 
@@ -330,28 +334,14 @@ distclean2: clean
 #Makefile: Makefile.in config.status
 #	cd $(top_srcdir) && $(SHELL) ./config.status
 
-#config.status: $(srcdir)/configure 
+#config.status: $(srcdir)/configure
 #	$(SHELL) ./config.status --recheck
 
-#--------------------------------------------------------------------------------
-# Calculate the revision and store it in src/h/revision.h
-#
-# git's REV count is adjusted to correspond to what the revision number
-# would have been under SVN (SVN revisions 1,2,4 and 1497 don't exist,
-# so git's revision count is 4 less than SVN's revision number).
-# The easiest portable way to add 4 is to write a small C program (!) to do it.
 update_rev:
-	@if test ! -z $(REPO_REV_COUNT) ; then \
-	   echo "#include <stdio.h>" > plus4.c; \
-	   echo "int main(void)" >> plus4.c; \
-	   echo "{" >> plus4.c; \
-	   echo "   printf(\"#define REPO_REVISION \\\"%d-%s\\\"\"," \
-	            $(REPO_REV_COUNT) "+ 4," \
-	            \"$(REPO_REV_HASH)\" ");" >> plus4.c; \
-	   echo "}" >> plus4.c; \
-	   gcc plus4.c -o plus4; \
-	   ./plus4 > src/h/revision.h; \
-	   rm plus4 plus4.c;\
+	@if test ! -z $(REPO_REV) ; then \
+	   echo "#define REPO_REVISION \"$(REPO_REV)\"" > src/h/revision.h; \
+	elif test ! -f src/h/revision.h ; then \
+	   echo "#define REPO_REVISION \"0\"" > src/h/revision.h; \
 	fi
 
 MV=2

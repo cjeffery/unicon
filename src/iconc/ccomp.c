@@ -328,8 +328,13 @@ Deliberate Syntax Error
 #endif					/* NTGCC */
 
 #if UNIX
+#ifdef MacOS
+   /* needs to be more precise, add a HAVE_LIBDL or some such */
+   buf = growcat(buf, &buflen, 1, " -ldl -Wl,-export_dynamic ");
+#else
    /* needs to be more precise, add a HAVE_LIBDL or some such */
    buf = growcat(buf, &buflen, 1, " -ldl -export-dynamic ");
+#endif					/* MacOS */
 #endif					/* UNIX */
 
 #endif					/* UNIX || NTGCC */
@@ -340,6 +345,15 @@ Deliberate Syntax Error
    if (verbose > 2)
       fprintf(stdout, "%s\n", buf);
 
+#ifndef HAVE_SYS_WAIT_H
+   // FIXME: this is a quick hack to solve iconc build on Windows
+#define WEXITSTATUS(wstat)    (((wstat) >> 8) & 0xff)
+#endif
+
+   /*
+    * FIXME: Man page says this about WEXITSTATUS
+    * This macro should be employed only if WIFEXITED returned true.
+    */
    /* Execute the (compile+)link */
    if ((rv = system(buf)) == -1)
       return EXIT_FAILURE;	/* fork() failed, or whatever */
