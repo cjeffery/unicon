@@ -59,7 +59,7 @@ BITS=@BITS@
 O=@OBJ@
 
 # OS
-OS=@unicon_os@
+UOS=@unicon_os@
 OSDIST=@unicon_osdist@
 OSREL=@unicon_osrel@
 
@@ -97,8 +97,31 @@ WICONTEXE=@WICONTEXE@
 UNICONEXE=@UNICONEXE@
 WUNICONEXE=@WUNICONEXE@
 ICONCEXE=@ICONCEXE@
-       
+
+SHELL=sh
 prefix=@prefix@
 exec_prefix=@exec_prefix@
 bindir=@bindir@
 libdir=@libdir@
+datarootdir=@datarootdir@
+docdir=@docdir@
+mandir=@mandir@
+htmldir=@htmldir@
+
+
+#  configuration parameters
+
+PKG_NAME=@PACKAGE_NAME@
+PKG_TARNAME=@PACKAGE_TARNAME@
+PKG_VERSION=@PACKAGE_VERSION@
+PKG_STRING=@PACKAGE_STRING@
+
+
+
+SHTOOL=$(TOPDIR)/shtool
+PATCHSTR=$(TOPDIR)/bin/patchstr
+
+
+
+
+

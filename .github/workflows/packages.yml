@@ -1,0 +1,99 @@
+name: Binary Packages
+on:
+  push:
+    branches:
+      - master
+      - ci
+    paths-ignore:
+    - 'docs/**'
+
+jobs:
+  Windows:
+    if: "!contains(github.event.head_commit.message, 'skip ci')"
+    runs-on: ${{ matrix.cfg.os }}
+    name: ${{ matrix.cfg.name }}
+    strategy:
+      matrix:
+        cfg:
+        -  { os: windows-latest,  name: 'Windows_64-bit',  opt: '' }
+        #-  { os: windows-latest,  name: 'Windows_32-bit', opt: '--build=i686-w64-mingw32 --host=i686-w64-mingw32' }
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Install dependencies
+      run: |
+        choco install openssl
+        choco install libjpeg-turbo
+
+    - name: Configure
+      run: sh configure  ${{ matrix.cfg.opt }}
+
+    - name: Make
+      run: make
+
+    - name: Installer
+      run: |
+        make WinInstaller
+
+    - name: Publish
+      uses: actions/upload-artifact@v2
+      with:
+        name: unicon-${{ matrix.cfg.name}}
+        path: Output/setup-unicon*.exe
+
+
+  Ubuntu:
+    if: "!contains(github.event.head_commit.message, 'skip ci')"
+    runs-on: ${{ matrix.cfg.os }}
+    name: ${{ matrix.cfg.name }}
+    strategy:
+      matrix:
+        cfg:
+        -  { os: ubuntu-16.04,  name: 'Ubuntu-16.04_amd64',   opt: '' }
+        -  { os: ubuntu-18.04,  name: 'Ubuntu-18.04_amd64',   opt: '' }
+        -  { os: ubuntu-20.04,  name: 'Ubuntu-20.04_amd64',   opt: '' }
+        #-  { os: ubuntu-20.04, name: 'Ubuntu-20.04_x86',  opt: '--host=i686-pc-linux-gnu' }
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        if [[ "${{ matrix.cfg.os }}" = "ubuntu-16.04" ]]
+        then
+        # need newer debhelper
+        sudo apt-get install debhelper -t xenial-backports
+        fi
+        sudo apt-get install -y gcc-multilib g++-multilib
+        sudo apt-get install -y build-essential fakeroot devscripts equivs dh-autoreconf
+        sudo mk-build-deps --install debian/control
+
+    - name: Configure
+      run: ./configure ${{ matrix.cfg.opt }}
+
+    - name: Deb
+      run: |
+        make debin
+        mkdir debian-pkg
+        cp ../unicondist/unicon_*.deb debian-pkg/
+        cp ../unicondist/unicon_*.changes debian-pkg/
+        cp ../unicondist/unicon_*.dsc debian-pkg/
+        cp ../unicondist/unicon_*.debian.tar.xz debian-pkg/
+        cp ../unicondist/unicon_*.orig.tar.gz debian-pkg/
+
+    - name: Publish
+      uses: actions/upload-artifact@v2
+      with:
+        name: unicon-${{ matrix.cfg.name}}
+        path: debian-pkg/unicon_*
+
+    - name: Install
+      run: sudo apt install ./debian-pkg/*.deb
+
+    - name: Test
+      run: make Test
+      env:
+        UC: unicon

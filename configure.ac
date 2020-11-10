@@ -1,4 +1,10 @@
-AC_INIT([Unicon],[13.1],[jeffery@cs.uidaho.edu], [unicon], [http://www.unicon.org])
+AC_PREREQ(2.57)
+LT_PREREQ(2.4.6)
+
+m4_define([unicon_version],[m4_esyscmd_s([config/scripts/version.sh "version"])])
+AC_INIT([Unicon],[unicon_version],[jeffery@cs.uidaho.edu], [unicon], [http://www.unicon.org])
+
+#AC_INIT([Unicon],[13.2],[jeffery@cs.uidaho.edu], [unicon], [http://www.unicon.org])
 
 AC_CANONICAL_HOST
 
@@ -92,35 +98,38 @@ echo "##########################################"
 
 AC_ARG_ENABLE([graphics],
 	[AS_HELP_STRING([--disable-graphics], [No graphics subsystem])],
-			[graphics=no], [graphics=yes])
+			[graphics=$enableval], [graphics=on])
 AC_ARG_ENABLE([graphics3d],
 	[AS_HELP_STRING([--disable-graphics3d], [No 3D graphics support])],
-		        [graphics3d=no], [graphics3d=yes])
+		        [graphics3d=$enableval], [graphics3d=on])
+AC_ARG_ENABLE([multiprograms],
+	[AS_HELP_STRING([--disable-multiprograms], [No multi programs support])],
+			[multiprograms=$enableval], [multiprograms=on])
 AC_ARG_ENABLE([concurrency],
 	[AS_HELP_STRING([--disable-concurrency], [No concurrent thread support])],
-			[concurrency=no], [concurrency=yes])
+			[concurrency=$enableval], [concurrency=on])
 AC_ARG_ENABLE([pattern],
 	[AS_HELP_STRING([--disable-pattern], [No pattern type support])],
-			[pattern=no], [pattern=yes])
+			[pattern=$enableval], [pattern=on])
 AC_ARG_ENABLE([database],
 	[AS_HELP_STRING([--disable-database], [No database support])],
-			[database=no], [database=yes])
+			[database=$enableval], [database=on])
 AC_ARG_ENABLE([ssl],
 	[AS_HELP_STRING([--disable-ssl], [No SSL support])],
-			[ssl=no], [ssl=yes])
+			[ssl=$enableval], [ssl=on])
 AC_ARG_ENABLE([audio],
 	[AS_HELP_STRING([--disable-audio], [No audio support])],
-			[audio=no], [audio=yes])
+			[audio=$enableval], [audio=on])
 AC_ARG_ENABLE([voip],
 	[AS_HELP_STRING([--disable-voip], [No VOIP support])],
-			[voip=no], [voip=yes])
+			[voip=$enableval], [voip=on])
 AC_ARG_ENABLE([plugins],
 	[AS_HELP_STRING([--disable-plugins], [No loadfunc or plugins support])],
-			[plugins=no], [plugins=yes])
+			[plugins=$enableval], [plugins=on])
 
 AC_ARG_ENABLE([iconc],
 	[AS_HELP_STRING([--disable-iconc], [Build Unicon Compiler (Iconc/Uniconc)])],
-			[iconc=no], [iconc=yes])
+			[iconc=$enableval], [iconc=on])
 AC_ARG_ENABLE([iconcurrency],
 	[AS_HELP_STRING([--enable-iconcurrency], [enable thread support in Unicon Compiler])],
 			[coniconc=yes], [coniconc=no])
@@ -140,12 +149,25 @@ AC_ARG_ENABLE([verbosebuild],
 	[AS_HELP_STRING([--enable-verbosebuild], [Show full CC build lines with all compiler arguments])],
 			[verbosebuild=yes], [verbosebuild=no])
 
+AC_ARG_ENABLE([doc],
+	[AS_HELP_STRING([--enable-doc], [Add makefile rule to build documentation])],
+			[doc=yes], [doc=no])
+AC_ARG_ENABLE([htmldoc],
+	[AS_HELP_STRING([--enable-htmldoc], [ADd makefile rule to html documentation])],
+			[htmldoc=yes], [htmldoc=no])
+
 AC_ARG_ENABLE([thin],
 	[AS_HELP_STRING([--enable-thin], [Do a minimalist build disabling non critical features])],
 			[thin=yes], [thin=no])
 AC_ARG_ENABLE([debug],
 	[AS_HELP_STRING([--enable-debug], [Add debugging symbols])],
 			[debug=yes], [debug=no])
+AC_ARG_ENABLE([debugheap],
+	[AS_HELP_STRING([--enable-debugheap], [Enable advanced heap debugging ])],
+			[debugheap=yes], [debugheap=no])
+AC_ARG_ENABLE([verifyheap],
+	[AS_HELP_STRING([--enable-verifyheap], [Enable advanced heap verification])],
+			[verifyheap=yes], [verifyheap=no])
 AC_ARG_ENABLE([devmode],
 	[AS_HELP_STRING([--enable-devmode], [Developper mode: turn on warnings and debugging options])],
 			[devmode=yes], [devmode=no])
@@ -185,6 +207,14 @@ if test x"$devmode" = x"yes" ; then
   AC_DEFINE([DEVMODE], [1], [Developer Mode])
 fi
 
+if test x"$debugheap" = x"yes" ; then
+  AC_DEFINE([DebugHeap], [1], [Debug Heap])
+fi
+
+if test x"$verifyheap" = x"yes" ; then
+  AC_DEFINE([VerifyHeap], [1], [Verify Heap])
+fi
+
 if test x"$udbtools" = x"yes" ; then
   UDBTOOLS=udbtools
 fi
@@ -209,6 +239,8 @@ fi
 AC_CFLAG([-fno-omit-frame-pointer])
 
 AC_CFLAG([-fno-strict-aliasing])
+
+AC_CFLAG([-Werror -Wno-parentheses-equality], [], [CFLAGS="$CFLAGS -Wno-parentheses-equality"])
 
 if test x"$devmode" = x"yes" ; then
   AC_CFLAG([-Wall])
@@ -274,7 +306,6 @@ SO=so
 # OS specific flags go here
 case $unicon_host in
      *linux*)
-      AC_CFLAG([-fno-unit-at-a-time])
       LDFLAGS="$LDFLAGS -rdynamic "
       RLINK="-rdynamic -Wl,-E "
       RLIBS="-ldl -lcrypt "
@@ -286,7 +317,6 @@ case $unicon_host in
      *bsd*)
         ;;
      *macos*)
-       AC_CFLAG([-Wno-parentheses-equality])
        CFDYN="-Xlinker -dylib -Xlinker -undefined -Xlinker dynamic_lookup -fpic"
        DASHX=-x
        RLIBS="-ldl "
@@ -297,8 +327,8 @@ case $unicon_host in
        DNT="-DNT"
        SO=dll
        DASHG="-G"
-       LDFLAGS="$LDFLAGS --static -m$BITS -mnop-fun-dllimport -mwin32 -DPTW32_STATIC_LIB "
-       CPPFLAGS="$CPPFLAGS --static -m$BITS -mnop-fun-dllimport -mwin32 -DPTW32_STATIC_LIB "
+       LDFLAGS="$LDFLAGS --static -mnop-fun-dllimport -mwin32 -DPTW32_STATIC_LIB "
+       CPPFLAGS="$CPPFLAGS --static -mnop-fun-dllimport -mwin32 -DPTW32_STATIC_LIB "
        LIBS="$LIBS -lgdi32 -lws2_32"
 
        WSTKLDFLAG="-Xlinker --stack -Xlinker 8192000"
@@ -322,7 +352,7 @@ case $unicon_host in
         ;;
 esac
 
-if test "x$iconc"      = "xyes" ; then
+if test "x$iconc" = "xyes" || test "x$iconc" = "xon" ; then
        ICONCTARGET=Iconc
 fi
 
@@ -386,21 +416,52 @@ AC_SUBST(UNIPROGS)
 
 
 if test "x$thin" = "xyes"; then
-graphics=no
-graphics3d=no
-concurrency=no
-pattern=no
-audio=no
-database=no
-voip=no
-plugins=no
-database=no
-ssl=no
 
-  AC_DEFINE([NoMultiProgram], [1], [No MultiProgram])
+   if test "x$graphics" = "xon"; then
+      graphics=no
+   fi
+
+   if test "x$graphics3d" = "xon"; then
+      graphics3d=no
+   fi
+
+   if test "x$concurrency" = "xon"; then
+      concurrency=no
+   fi
+
+   if test "x$pattern" = "xon"; then
+      pattern=no
+   fi
+
+   if test "x$audio" = "xon"; then
+      audio=no
+   fi
+
+   if test "x$database" = "xon"; then
+      database=no
+   fi
+
+   if test "x$voip" = "xon"; then
+      voip=no
+   fi
+
+   if test "x$plugins" = "xon"; then
+      plugins=no
+   fi
+
+   if test "x$database" = "xon"; then
+      database=no
+   fi
+
+   if test "x$databse" = "xon"; then
+      ssl=no
+   fi
+
+   if test "x$multiprograms" = "xon"; then
+      multiprograms=no
+   fi
   # what else we need to disable?
 fi
-
 
 AC_CHECK_FUNCS([socket bcopy bzero memcpy memset inet_aton inet_pton \
 	       snprintf vsprintf rename ftruncate flock fsync \
@@ -421,6 +482,10 @@ AC_SEARCH_LIBS([clock_gettime],[rt],
 AC_SEARCH_LIBS([crypt],[crypt],
 	[AC_DEFINE([HAVE_CRYPT], [1], [crypt])])
 
+if test "x$multiprograms" = "xno"; then
+  AC_DEFINE([NoMultiProgram], [1], [No MultiProgram])
+fi
+
 if test "x$concurrency" = "xno"; then
   AC_DEFINE([NoConcurrent], [1], [No Concurrency])
 fi
@@ -440,7 +505,7 @@ fi
 
 CHECK_ZLIB()
 
-if test "x$graphics" = "xyes"; then
+if ! test "x$graphics" = "xno"; then
 
   CHECK_XLIB()
   # if we have X11 or if we are running on MS Windows check for graphics libs
@@ -451,7 +516,7 @@ if test "x$graphics" = "xyes"; then
     CHECK_JPEG()
     CHECK_PNG()
 
-    if test "x$graphics3d" = "xyes"; then
+    if ! test "x$graphics3d" = "xno"; then
        # assume we have opengl on windows
        if test "ms$unicon_os" = "mswindows" ; then
           cv_libGL=yes
@@ -539,7 +604,7 @@ else
    fi
 fi
 
-if test "x$plugins" = "xyes"; then
+if ! test "x$plugins" = "xno"; then
   AC_SEARCH_LIBS([dlopen], [dl dld],
         [AC_DEFINE([HAVE_LIBDL], [1], [define to 1 if you have dlopen])],
 	[])
@@ -556,7 +621,7 @@ fi
 #AC_CHECK_FUNC(dlopen,
 #	[AC_DEFINE([HAVE_DLOPEN], [1], [dlopen for shared object via c functions])])
 
-if test "x$audio" = "xyes"; then
+if ! test "x$audio" = "xno"; then
    CHECK_OGG()
    CHECK_SDL()
    CHECK_SMPEG()
@@ -565,7 +630,7 @@ else
   AC_DEFINE([NoAudio], [1], [No Audio])
 fi
 
-if test "x$voip" = "xyes"; then
+if ! test "x$voip" = "xno"; then
     # A C++ compiler must be present and usable
     if test "$CXX" = "g++" -a "$GXX" = "yes"; then
       CHECK_VOICE()
@@ -576,18 +641,24 @@ else
   AC_DEFINE([NoVoip], [1], [No VOIP])
 fi
 
-if test "x$database" = "xyes"; then
+if ! test "x$database" = "xno"; then
    if test "ms$unicon_os" = "mswindows" ; then
      CHECK_ODBC32()
    else
      CHECK_ODBC()
    fi
 else
-  AC_DEFINE([NoDatabase], [1], [No Database])
+   AC_DEFINE([NoDatabase], [1], [No Database])
 fi
 
+
 CHECK_PTHREAD()
-CHECK_OPENSSL()
+
+if ! test "x$ssl" = "xno" ; then
+   CHECK_OPENSSL()
+else
+   AC_DEFINE([NoDatabase], [1], [No Database])
+fi
 
 # autoconf does this too late, so just do it now...
 test "x$prefix" = xNONE && prefix=$ac_default_prefix
@@ -604,6 +675,7 @@ AC_SUBST(bindir)
 AC_SUBST(libdir)
 AC_SUBST(docdir)
 AC_SUBST(mandir)
+AC_SUBST(htmldir)
 
     cprefix="$prefix"
     cexec_prefix="$exec_prefix"
@@ -651,11 +723,14 @@ else
 fi
 
 # want graphics
-if test "x$graphics" = "xyes" ; then
+if test "x$graphics" = "xyes" || test "x$graphics" = "xon" ; then
   gtmp="Graphics           :"
   if test "x$cv_libX11"    = "xyes" ; then
     gtmp=" + $gtmp +X11 "
   else
+    if test "x$graphics" = "xyes" ; then
+        AC_MSG_ERROR("Graphics requires libx11-dev or equivalent")
+    fi
     gtmp=" - $gtmp -X11 "
   fi
 
@@ -673,12 +748,15 @@ else
 fi
 
 # want graphics3d
-if test "x$graphics3d" = "xyes" ; then
+if test "x$graphics3d" = "xyes" || test "x$graphics3d" = "xon" ; then
 
   if test "x$cv_libGL"   = "xyes" ; then
     gdtmp="$gdtmp+OpenGL "
     ong3d=1
   else
+    if test "x$graphics3d" = "xyes" ; then
+        AC_MSG_ERROR("3D graphics requires libGL-dev")
+    fi
     gdtmp="$gdtmp-OpenGL "
   fi
 
@@ -686,6 +764,9 @@ if test "x$graphics3d" = "xyes" ; then
     gdtmp="$gdtmp +GLU "
     if test $ong3d = 1 ; then ong3d=2 ; fi
   else
+    if test "x$graphics3d" = "xyes" ; then
+        AC_MSG_ERROR("3D graphics requires libGLU-dev")
+    fi
     gdtmp="$gdtmp -GLU "
   fi
 
@@ -694,6 +775,9 @@ if test "x$graphics3d" = "xyes" ; then
   if test "x$cv_opengl" = "xyes" ; then
     gdtmp=" + Graphics3D         : $gdtmp"
   else
+    if test "x$graphics3d" = "xyes" ; then
+        AC_MSG_ERROR("3D graphics requires opengl librarry")
+     fi
     gdtmp=" - Graphics3D         : $gdtmp"
   fi
 else
@@ -702,25 +786,31 @@ else
 fi
 
 # want concurrency
-if test "x$concurrency" = "xyes" ; then
+if test "x$concurrency" = "xyes" || test "x$concurrency" = "xon" ; then
   if test "x$cv_libpthread"  = "xyes" ; then
     contmp=" + Concurrency        : +pthread"
   else
     contmp=" - Concurrency        : -pthread"
   fi
 else
-#disbaled Concurrency
+  #disabled Concurrency
   contmp=" ! Concurrency"
+  if test "x$concurrency" = "xyes" ; then
+     AC_MSG_ERROR("concurrency requires libpthread-dev")
+  fi
 fi
 
 # want audio
-if test "x$audio" = "xyes" ; then
+if test "x$audio" = "xyes" || test "x$audio" = "xon" ; then
   atmp="Audio              :"
   onAudio=0
   if test "x$cv_libopenal" = "xyes" ; then
     atmp="$atmp +OpenAL "
     onAudio="1"
   else
+     if test "x$audio" = "xyes" ; then
+        AC_MSG_ERROR("audio requires libopenal-dev")
+     fi
     atmp="$atmp -OpenAL "
   fi
 
@@ -728,7 +818,10 @@ if test "x$audio" = "xyes" ; then
     atmp="$atmp +alut "
     if test "$onAudio" = 1 ; then onAudio=2 ; fi
   else
-    atmp="$atmp -alut "
+     if test "x$audio" = "xyes" ; then
+        AC_MSG_ERROR("audio requires libalut-dev")
+     fi
+     atmp="$atmp -alut "
   fi
 
 
@@ -764,6 +857,9 @@ if test "x$audio" = "xyes" ; then
     atmp=" + $atmp"
   else
     atmp=" - $atmp"
+    if test "x$audio" = "xyes" ; then
+       AC_MSG_ERROR("audio requires libsmpeg or libogg and libvorbis-dev")
+    fi
   fi
 
 else
@@ -772,28 +868,40 @@ else
 fi
 
 # want voip
-if test "x$voip" = "xyes" ; then
+if test "x$voip" = "xyes" || test "x$voip" = "xon" ; then
   if test "x$cv_libvoip"         = "xyes" ; then
     vtmp=" + VOIP               : +voip"
   else
+     if test "x$voip" = "xyes" ; then
+        AC_MSG_ERROR("voip requires libvoip-dev")
+     fi
     vtmp=" - VOIP               : -voip"
   fi
 
   if test "x$cv_libjvoip"         = "xyes" ; then
     vtmp="$vtmp +jvoip"
   else
-    vtmp="$vtmp -jvoip"
+     if test "x$voip" = "xyes" ; then
+        AC_MSG_ERROR("voip requires libjvoip-dev")
+     fi
+     vtmp="$vtmp -jvoip"
   fi
 
   if test "x$cv_libjthread"         = "xyes" ; then
     vtmp="$vtmp +jthread"
   else
+     if test "x$voip" = "xyes" ; then
+        AC_MSG_ERROR("voip requires libjthread-dev")
+     fi
     vtmp="$vtmp -jthread"
   fi
 
   if test "x$cv_libjrtp"         = "xyes" ; then
     vtmp="$vtmp +jrtp"
   else
+     if test "x$voip" = "xyes" ; then
+        AC_MSG_ERROR("voip requires libjrtp-dev")
+     fi
     vtmp="$vtmp -jrtp"
   fi
 
@@ -803,14 +911,17 @@ else
 fi
 
 # want database
-if test "x$database" = "xyes" ; then
+if test "x$database" = "xyes" || test "x$database" = "xon" ; then
   if test "$cv_libodbc"        = yes ; then
     dtmp=" + Database           : +odbc"
   else
   if test "x$cv_libiodbc"       = "xyes" ; then
     dtmp=" + Database           : +iodbc"
   else
-    dtmp=" - Database           : -odbc | -iodbc"
+     if test "x$database" = "xyes" ; then
+        AC_MSG_ERROR("database requires libodbc-dev or libiodbc-dev")
+     fi
+     dtmp=" - Database           : -odbc | -iodbc"
   fi
   fi
 else
@@ -819,21 +930,25 @@ else
 fi
 
 # want ssl
-if test "x$ssl" = "xyes" ; then
+if test "x$ssl" = "xyes" || test "x$ssl" = "xon" ; then
   if test "x$cv_libssl"      = "xyes" ; then
-    stmp=" + SSL                : +ssl"
+     stmp=" + SSL                : +ssl"
   else
-    stmp=" - SSL                : -ssl"
+     if test "x$ssl" = "xyes" ; then
+        AC_MSG_ERROR("ssl requirels libssl-dev or equivalent")
+     fi
+     stmp=" - SSL                : -ssl"
   fi
 else
 #disbaled ssl
   stmp=" ! SSL"
 fi
 
-AC_MSG_RESULT([
+revision=`./config/scripts/version.sh "revision"`
 
+cat << EOF  > unicon-config.log
 --------------------------------------------------
-           Configuration Summary
+    $PACKAGE_STRING Configuration Summary
 --------------------------------------------------
 *** Build Environment
 Host     :  $host_os  ($unicon_host) $unicon_osdist $unicon_osrel
@@ -844,10 +959,11 @@ LDFLAGS  :$LDFLAGS
 LIBS     : $LIBS
 CXX      :  $CXX  (Required only with FTGL and VOIP)
 CXXFLAGS : $CXXFLAGS
-prefix	 : $prefix
+prefix	 :  $prefix
 Verbose  :  $verbosebuild
 Debug    :  $debug
 Devmode  :  $devmode
+Revision :  $revision
 
 *** Features (+Available   -Missing   !Disabled)
 $ctmp
@@ -858,39 +974,42 @@ $atmp
 $vtmp
 $dtmp
 $stmp
-])
+EOF
 
-if test "x$plugins"      = "xyes" ; then
+
+if test "x$plugins" = "xyes" || test "x$plugins"  = "xon" ; then
   if test "x$ac_cv_search_dlopen" = "xno" ; then
-    echo " - Plugins"
+    echo " - Plugins" >> unicon-config.log
   else
-    echo " + Plugins"
+    echo " + Plugins" >> unicon-config.log
   fi
 else
-  echo " ! Plugins"
+  echo " ! Plugins" >> unicon-config.log
 fi
 
-if test "x$iconc"      = "xyes" ; then
+if test "x$iconc"  = "xyes" || test "x$iconc" = "xon" ; then
   if test "x$coniconc"      = "xyes" ; then
-     echo " + Compiler: with concurrency"
+     echo " + Compiler: with concurrency >> unicon-config.log"
   else
-     echo " + Compiler: no concurrency"
+     echo " + Compiler: no concurrency" >> unicon-config.log
   fi
 else
-  echo " ! Compiler"
+  echo " ! Compiler" >> unicon-config.log
 fi
 
-if test "x$pattern"      = "xyes" ; then
-  echo " + Patterns"
+if test "x$pattern" = "xyes" || test "x$pattern" = "xon" ; then
+  echo " + Patterns" >> unicon-config.log
 else
-  echo " ! Patterns"
+  echo " ! Patterns" >> unicon-config.log
 fi
 
-if test "x$ovld"      = "xyes" ; then
-  echo " + Overloading"
+if test "x$ovld" = "xyes"  ||  test "x$ovld" = "xon" ; then
+  echo " + Overloading" >> unicon-config.log
 else
-  echo " ! Overloading"
+  echo " ! Overloading" >> unicon-config.log
 fi
+
+cat unicon-config.log
 
 echo ""
 echo "do make to continue the build"

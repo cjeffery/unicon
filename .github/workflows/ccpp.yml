@@ -1,27 +1,156 @@
 name: Build
 on:
-  push:
-    paths-ignore:
-    - 'docs/**'
-
   pull_request:
     branches:
       - master
+      - ci
+    paths-ignore:
+    - 'docs/**'
 
 jobs:
-  build:
-    runs-on: ${{ matrix.os }}
+  Windows:
+    if: "!contains(github.event.head_commit.message, 'skip ci')"
+    runs-on: ${{ matrix.cfg.os }}
+    name: ${{ matrix.cfg.name }}
     strategy:
       matrix:
-        os: [macOS-latest, windows-latest, ubuntu-latest]
-
+        cfg:
+        -  { os: windows-latest,  name: 'Windows 64-bit',  opt: '' }
+        #-  { os: windows-latest,  name: 'Windows 32-bit', opt: '--build=i686-w64-mingw32 --host=i686-w64-mingw32' }
     steps:
-    - uses: actions/checkout@v1
-    - name: configure
-      run: sh configure
-    - name: make
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Configure
+      run: sh configure  ${{ matrix.cfg.opt }}
+
+    - name: Make
       run: make
-    - name: test
+
+    - name: Test
       run: make Test
 
+    - name: Summary
+      run: |
+        cat unicon-config.log
+        cat unicon-features.log
 
+  macOs:
+    if: "!contains(github.event.head_commit.message, 'skip ci')"
+    runs-on: macos-latest
+    steps:
+
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Configure
+      run: ./configure
+
+    - name: Make
+      run: make
+
+    - name: Test
+      run: make Test
+
+    - name: Summary
+      run: |
+        cat unicon-config.log
+        cat unicon-features.log
+
+  Ubuntu:
+    if: "!contains(github.event.head_commit.message, 'skip ci')"
+    runs-on: ${{ matrix.cfg.os }}
+    name: ${{ matrix.cfg.name }}
+    strategy:
+      matrix:
+        cfg:
+        -  { os: ubuntu-16.04,  name: 'Ubuntu 16.04',   opt: '' }
+        -  { os: ubuntu-18.04,  name: 'Ubuntu 18.04',   opt: '' }
+        -  { os: ubuntu-20.04,  name: 'Ubuntu 20.04',   opt: '' }
+        -  { os: ubuntu-latest, name: 'Ubuntu 32-bit',  opt: '--host=i686-pc-linux-gnu' }
+        -  { os: ubuntu-latest, name: 'Clang',          opt: 'CC=clang CXX=clang' }
+        -  { os: ubuntu-latest, name: 'No Graphics',    opt: '--disable-graphics' }
+        -  { os: ubuntu-latest, name: 'No 3D Graphics', opt: '--disable-graphics3d' }
+        -  { os: ubuntu-latest, name: 'No Concurrency', opt: '--disable-concurrency' }
+        -  { os: ubuntu-latest, name: 'Heap Test', opt: '--enable-debugheap  --enable-verifyheap' }
+        -  { os: ubuntu-latest, name: 'Thin Build',     opt: '--enable-thin' }
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        if [[ "${{ matrix.cfg.os }}" = "ubuntu-16.04" ]]
+        then
+        # need newer debhelper
+        sudo apt-get install debhelper -t xenial-backports
+        fi
+        if [[ "${{ matrix.cfg.name }}" = "Ubuntu 32-bit" ]]
+        then
+        # Install tools to cross compile 32-bit
+        sudo apt-get install -y gcc-multilib g++-multilib
+        fi
+        # Easy way to install all dependencies
+        sudo apt-get install -y devscripts equivs
+        sudo mk-build-deps --install debian/control
+
+    - name: Configure
+      run: ./configure ${{ matrix.cfg.opt }}
+
+    - name: Make
+      run: make
+      # set VRFY globally even though it is only needed in the debug test
+      env:
+        VRFY: -2
+
+    - name: Test
+      run: make Test
+      # set VRFY globally even though it is only needed in the debug test
+      env:
+        VRFY: -2
+
+    - name: Summary
+      run: |
+        cat unicon-config.log
+        cat unicon-features.log
+
+  DebianPkg:
+    if: "!contains(github.event.head_commit.message, 'skip ci')"
+    runs-on: ${{ matrix.cfg.os }}
+    name: ${{ matrix.cfg.name }}
+    strategy:
+      matrix:
+        cfg:
+        -  { os: ubuntu-20.04,  name: 'Debian-Pkg',   opt: '' }
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential fakeroot devscripts equivs dh-autoreconf
+        sudo mk-build-deps --install debian/control
+
+    - name: Configure
+      run: ./configure ${{ matrix.cfg.opt }}
+
+    - name: Deb
+      run: |
+        make debin
+        mkdir debian-pkg
+        cp ../unicondist/unicon_*.deb debian-pkg/
+        cp ../unicondist/unicon_*.changes debian-pkg/
+        cp ../unicondist/unicon_*.dsc debian-pkg/
+        cp ../unicondist/unicon_*.debian.tar.xz debian-pkg/
+        cp ../unicondist/unicon_*.orig.tar.gz debian-pkg/
+
+    - name: Install
+      run: sudo apt install ./debian-pkg/*.deb
+
+    - name: Test
+      run: make Test
+      env:
+        UC: unicon

@@ -10,6 +10,8 @@
 Makedefs
 Makedefs.uni
 config.status
+unicon-config.log
+unicon-features.log
 src/common/doincl
 src/common/patchstr
 src/common/rswitch.s
@@ -21,6 +23,11 @@ src/runtime/iconx
 src/runtime/iconc
 src/iconc/iconc
 src/runtime/rt.db
+
+# Windows installer temp files
+config/win32/gcc/unicon_version.iss
+src/runtime/icon.rc
+src/runtime/unicon.ico
 
 tests/*/local/
 tests/posix/stand/x.std
@@ -60,6 +67,9 @@ uni/xml/testinvalid
 uni/xml/testnotwf
 uni/xml/testvalid
 
+# Auto-generated API documents
+doc/uni-api/*
+doc/ipl-api/*
 
 # http://www.gnu.org/software/autoconf
 

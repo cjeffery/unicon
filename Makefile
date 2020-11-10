@@ -1,46 +1,41 @@
 #  Top Level Makefile for Unicon
 #
 
-#  configuration parameters
-VERSION=13.1
+TOPDIR=.
+
+default: default_target
+
+include Makedefs
+
 name=unspecified
+
+# Make sure no custom PATHs are set so the build doesn't get affected
+# by other installations of unicon on the same system if they do exist
 IPATH=
 LPATH=
-
-REPO_REV_COUNT="$(shell LC_ALL=C git rev-list --first-parent --count HEAD )"
-REPO_REV_HASH="$(shell LC_ALL=C git rev-parse --short HEAD)"
-REPO_REV="$(REPO_REV_COUNT)-$(REPO_REV_HASH)"
-
-SHELL=sh
-SHTOOL=./shtool
-prefix=/usr/local
-exec_prefix=${prefix}
-bindir=${exec_prefix}/bin
-libdir=${exec_prefix}/lib
-docdir=${datarootdir}/doc/${PACKAGE_TARNAME}
-mandir=${datarootdir}/man
-datarootdir = ${prefix}/share
-
-PATCHSTR=./bin/patchstr
 
 # get the current unicon dir name
 unicwd=`basename \`pwd\``
 
 
-default: allsrc
+default_target: allsrc
 	$(MAKE) -C ipl/lib
 	$(MAKE) -C uni
 	$(MAKE) -C plugins
-	@echo ========== Build Summary ==========
-	bin/unicon -features
-	@echo ===================================
+	@echo ============ Build Features ============ > unicon-features.log
+	bin/unicon -features >> unicon-features.log
+	@echo ======================================== >> unicon-features.log
+	@cat unicon-features.log
 	@echo "add $(unicwd)/bin to your path or do \"make install\" to install Unicon on your system"
 
 
-.PHONY: plugins
+.PHONY: plugins update_rev
 
 Makedefs: Makedefs.in configure
 	sh configure
+
+update_rev:
+	@./config/scripts/version.sh
 
 #
 # if you make any changes to configure.ac or aclocal.m4 run  autoreconf -i
@@ -80,56 +75,25 @@ allsrc: Makedefs update_rev
 	$(MAKE) -C src
 
 
-config/unix/$(name)/status src/h/define.h:
-	:
-	: To configure Unicon, run either
-	:
-	:	make Configure name=xxxx     [for no graphics]
-	: or	make X-Configure name=xxxx   [with X-Windows graphics]
-	:
-	: where xxxx is one of
-	:
-	@cd config/unix; ls -d [a-z]*
-	:
-	@exit 1
-
 ##################################################################
-#
-# Code configuration.
-#
-# $Id: top.mak,v 1.30 2010-05-06 23:13:56 jeffery Exp $
 
 # needed especially for MacOS
 .PHONY: Configure
 
 # Configure the code for a specific system.
 
-Configure:
-		./configure --disable-graphics
-
-X-Configure:
-		./configure
-
-
-Thin-Configure:
-		./configure --enable-thin
-
-
-Thin-X-Configure:
-		./configure --enable-thinx
-
 V-Configure:	config/unix/$(name)/status
-		$(MAKE) Pure >/dev/null
-		-cd src/lib/voice; $(MAKE)
-		cd config/unix; $(MAKE) Setup-NoGraphics name=$(name)
-		sh ./configure --disable-graphics CFLAGS=$(CFLAGS) LDFLAGS=$(LDFLAGS)
+	$(MAKE) Pure >/dev/null
+	-cd src/lib/voice; $(MAKE)
+	cd config/unix; $(MAKE) Setup-NoGraphics name=$(name)
+	sh ./configure --disable-graphics CFLAGS=$(CFLAGS) LDFLAGS=$(LDFLAGS)
 
 VX-Configure:	config/unix/$(name)/status
-		$(MAKE) Pure >/dev/null
-		-cd src/lib/voice; $(MAKE)
-		cd config/unix; $(MAKE) Setup-Graphics name=$(name)
-		sh ./configure CFLAGS=$(CFLAGS) LDFLAGS=$(LDFLAGS)
-		@echo Remember to add unicon/bin to your path
+	$(MAKE) Pure >/dev/null
+	-cd src/lib/voice; $(MAKE)
+	cd config/unix; $(MAKE) Setup-Graphics name=$(name)
+	sh ./configure CFLAGS=$(CFLAGS) LDFLAGS=$(LDFLAGS)
+	@echo Remember to add unicon/bin to your path
 
 WUnicon32:
 	sh configure --host=i686-w64-mingw32 --disable-iconc
@@ -137,35 +101,24 @@ WUnicon32:
 WUnicon64:
 	sh configure --build=x86_64-w64-mingw32 --disable-iconc
 
-WUnicon:
-	@echo Reloading the Makefile from config/win32/gcc/makefile.top
-	cp config/win32/gcc/makefile.top Makefile
-	@echo Done.
-	@echo
-	@echo Ready to build Windows Unicon
-	@echo Make sure the Unicon bin directory is in your path before continuing, then run:
-	@echo
-	@echo "   - " \"make WUnicon32\" for a 32-bit build, or
-	@echo "   - " \"make WUnicon64\" for a 64-bit build - requires MinGW64.
-	@echo
+INNOSETUP="C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+
+WinInstaller:
+
+	@echo "#define PkgName \"$(PKG_TARNAME)\"" > config/win32/gcc/unicon_version.iss
+	@echo "#define AppVersion \"$(PKG_VERSION)\"" >> config/win32/gcc/unicon_version.iss
+	@echo "#define AppRevision \""`./config/scripts/version.sh "revision"`"\"" \
+		>> config/win32/gcc/unicon_version.iss
+	@echo "#define PATCHSTR \"$(PATCHSTR)\"" >> config/win32/gcc/unicon_version.iss
+	$(INNOSETUP) config/win32/gcc/unicon.iss
 
 NT-Configure:
-		cmd /C "cd config\win32\msvc && config"
-		@echo Now remember to add unicon/bin to your path
+	cmd /C "cd config\win32\msvc && config"
+	@echo Now remember to add unicon/bin to your path
 
 W-Configure:
-		cmd /C "cd config\win32\msvc && w-config"
-		@echo Now remember to add unicon/bin to your path
-
-W-Configure-GCC:
-		cd config/win32/gcc && sh w-config.sh
-		@echo Now remember to add unicon/bin to your path
-		@echo Then run "make Unicon" to build
-
-NT-Configure-GCC:
-		cd config/win32/gcc && sh config.sh
-		@echo Now remember to add unicon/bin to your path
-		@echo Then run "make Unicon" to build
+	cmd /C "cd config\win32\msvc && w-config"
+	@echo Now remember to add unicon/bin to your path
 
 ##################################################################
 #
@@ -315,13 +268,12 @@ install Install:
 	@$(INST) -m 644 doc/unicon/*.* $(DESTDIR)$(docdir)/unicon
 
 # Bundle up for binary distribution.
-
-DIR=unicon.$(VERSION)
+PKGDIR=$(PKG_TARNAME).$(PKG_VERSION)
 Package:
-		rm -rf $(DIR)
-		umask 002; $(MAKE) Install dest=$(DIR)
-		tar cf - unicon.$(VERSION) | gzip -9 >unicon.$(VERSION).tgz
-		rm -rf $(DIR)
+		rm -rf $(PKGDIR)
+		umask 002; $(MAKE) Install dest=$(PKGDIR)
+		tar cf - $(PKG_TARNAME).$(PKG_VERSION) | gzip -9 >$(PKG_TARNAME).$(PKG_VERSION).tgz
+		rm -rf $(PKGDIR)
 
 distclean2: clean
 	@for d in $(SUBDIRS); do \
@@ -337,27 +289,20 @@ distclean2: clean
 #config.status: $(srcdir)/configure
 #	$(SHELL) ./config.status --recheck
 
-update_rev:
-	@if test ! -z $(REPO_REV) ; then \
-	   echo "#define REPO_REVISION \"$(REPO_REV)\"" > src/h/revision.h; \
-	elif test ! -f src/h/revision.h ; then \
-	   echo "#define REPO_REVISION \"0\"" > src/h/revision.h; \
-	fi
 
-MV=2
-VV=13.1.$(MV)
-UTAR=unicon-$(VV).tar.gz
-UTARORIG=unicon_$(VV).orig.tar.gz
+#MV=.0
+VSUFFIX?=~prerelease
+VV=$(PKG_VERSION)$(MV)
+PKG_STRNAME=$(PKG_TARNAME)_$(VV)$(VSUFFIX)
+UTAR=$(PKG_STRNAME).tar.gz
+UTARORIG=$(PKG_STRNAME).orig.tar.gz
 
 dist: distclean update_rev
-#	$(SHTOOL) fixperm -v *;
 	echo "Building $(UTAR)"
 	tar -czf ../$(UTAR) --exclude-vcs --exclude-backups ../$(unicwd)
-#	$(SHTOOL) tarball -o $(UTAR) -c 'gzip -9' \
-#                          -e '\.svn,\.[oau]$$,\.core$$,~$$,^\.#,#*#,*~', . uni/unicon/unigram.u uni/unicon/idol.u
 
 publishdist: dist
-	scp ../$(UTAR) web.sf.net:/home/project-web/unicon/htdocs/dist/uniconsrc-nightly.tar.gz
+	scp ../$(UTAR) web.sf.net:/home/project-web/unicon/htdocs/download/
 
 # Deb Section
 udist=unicondist
@@ -370,25 +315,25 @@ deb: dist
 	cp ../$(udist)/$(UTAR) ../$(udist)/$(UTARORIG)
 	@echo unpacking ../$(udist)/$(UTAR)
 	cd ../$(udist) && tar -xf $(UTAR)
-	mv ../$(udist)/unicon ../$(udist)/unicon-$(VV)
+	mv ../$(udist)/unicon ../$(udist)/$(PKG_STRNAME)
 	@echo "To finish building the deb package, do"
-	@echo "   cd ../$(udist)/unicon-$(VV)"
+	@echo "   cd ../$(udist)/$(PKG_STRNAME)"
 	@echo "Then run:"
 	@echo "	 debuild -us -uc"
 
 debin: deb
-	cd ../$(udist)/unicon-$(VV) && debuild -us -uc $(SIGNOPT) --lintian-opts --profile debian
-	@echo "  Did we get : ../$(udist)/unicon-$(VV).deb"
+	cd ../$(udist)/$(PKG_STRNAME) && debuild -us -uc $(SIGNOPT) --lintian-opts --profile debian
+	ls -lh ../$(udist)/unicon_*.deb
 
 debsrc: deb
-	cd ../$(udist)/unicon-$(VV) && debuild -S $(SIGNOPT) --lintian-opts --profile debian
-	@echo "  Did we get : ../$(udist)/unicon-$(VV).deb"
+	cd ../$(udist)/$(PKG_STRNAME) && debuild -S $(SIGNOPT) --lintian-opts --profile debian
+	ls -lh ../$(udist)/$(PKG_TARNAME)_*.dsc
 
 debsign:
-	cd ../$(udist) && debsign unicon_$(VV)-1_amd64.changes  $(SIGNOPT)
+	cd ../$(udist) && debsign $(PKG_STRNAME)*.changes  $(SIGNOPT)
 
 launchpad:
-	cd ../$(udist) && dput unicon-ppa unicon_$(VV)-1_source.changes
+	cd ../$(udist) && dput unicon-ppa $(PKG_STRNAME)*_source.changes
 
 
 # RPM section
@@ -407,17 +352,17 @@ rpm: dist
 rpmbin: rpm
 	cd ../$(rpmdir)/SPECS &&  rpmbuild -ba unicon.spec
 	@ls ../$(rpmdir)/RPMS/
-	@echo "  Did we get : ../$(rpmdir)/RPMS/unicon-$(VV)-*.*.rpm"
+	ls -lh ../$(rpmdir)/RPMS/$(PKG_STRNAME)-*.*.rpm
 
 rpmresume: rpm
 	cd ../$(rpmdir) &&  rpmbuild -bi --short-circuit unicon.spec
 	@ls ../$(rpmdir)/RPMS/
-	@echo "  Did we get : ../$(rpmdir)/SRPMS/unicon-$(VV)-*.*rpm"
+	ls -lh ../$(rpmdir)/RPMS/$(PKG_STRNAME)-$(VV)-*.*.rpm
 
 rpmsrc:
 	cd ../$(rpmdir) &&  rpmbuild -bs unicon.spec
 	@ls ../$(rpmdir)/SRPMS/
-	@echo "  Did we get : ../$(rpmdir)/SRPMS/unicon-$(VV)-*.*.src.rpm"
+	ls -lh ../$(rpmdir)/RPMS/$(PKG_STRNAME)-*.*.rpm
 
 
 ##################################################################

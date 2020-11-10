@@ -3,7 +3,12 @@
 #  If building with the compiler (instead of the interpreter)
 #  use the "-fs" option to avoid problems.
 
-include ../../Makedefs
+
+TOPDIR=../..
+
+default: default_target
+
+include $(TOPDIR)/Makedefs
 
 ICONT = icont
 IFLAGS = -us
@@ -26,7 +31,7 @@ CSRC = bitcount.c files.c fpoll.c internal.c lgconv.c osf.c \
 
 
 
-default: $(CFUNCTARGET)
+default_target: $(CFUNCTARGET)
 
 cfun:	cfunc.u $(FUNCLIB)
 
@@ -50,4 +55,4 @@ cfunc.icn:	$(CSRC) mkfunc.sh
 
 # cleanup
 clean Clean:
-	-rm -f $(FUNCLIB) *.o *.u? *.so so_locations cfunc.icn
+	-rm -f $(FUNCLIB) *.o *.u? *.so so_locations

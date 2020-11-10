@@ -29,11 +29,10 @@ dptr argp;
 FILE *logfptr; 
    {
    struct b_proc *cproc;
-   long depth = 0, iteration = 0;
 #if COMPILER
    struct debug *debug;
-   word nparam;
 #else					/* COMPILER */
+   long depth = 0, iteration = 0;
    struct pf_marker *origpfp;
    dptr arg;
    inst cipc;
@@ -1238,6 +1237,27 @@ void heaperr(char *msg, union block *p, int t)
  *----------------------------------------------------------------------
  */
 
+/* This function may be called from the debugger to display the current
+ * file and line number in the Unicon program
+ */
+void dbgUFL()
+{
+#if COMPILER
+  fprintf(stdout, "File %s; Line %d\n", file_name, line_num);
+#else                     /* COMPILER */
+  CURTSTATE();
+  fprintf(stdout, "File: %s Line: %d\n",
+          findfile(curtstate->c->es_ipc.opnd),
+          findline(curtstate->c->es_ipc.opnd));
+#endif                     /* COMPILER */
+}
+
+/* Call this from the debugger to print a (Unicon) stack trace back */
+void dbgUTrace()
+{
+  CURTSTATE_AND_CE();
+  tracebk(pfp, glbl_argp, NULL);
+} 
 
 /* This function may be used in test code where the criterion for a
  * break point is complex (it may be easier easier to write C code and
@@ -1257,4 +1277,4 @@ body {
 }
 end
 
-#endif					/* DEVMODE */
+#endif                  /* DEVMODE */

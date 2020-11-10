@@ -173,11 +173,15 @@ char *srcname;
 char *exename;
    {
    struct lib *l;
-   char sbuf[MaxFileName];		/* file name construction buffer */
    int  rv, buflen;
-   char *buf, objname[MaxFileName];
+   char *buf;
    char *s;
-   char *dlrgint;
+   /* dlrgint disabled for now */
+#if 0
+   char sbuf[MaxFileName];		/* file name construction buffer */
+   char objname[MaxFileName];
+   char *dlrgint;               
+#endif
    extern int opt_hc_opts;
 
    if (!opt_hc_opts)
@@ -315,9 +319,9 @@ Deliberate Syntax Error
 
    buf = growcat(buf, &buflen, 2, " ", LinkLibs);
 
-#if defined(MacOSX) || defined(HAVE_LIBFTGL)
+#if defined(MacOS) || defined(HAVE_LIBFTGL)
    buf = growcat(buf, &buflen, 1, " -lstdc++");
-#endif					/* MacOSX || HAVE_LIBFTGL */
+#endif					/* MacOS || HAVE_LIBFTGL */
 
 #if HAVE_LIBSSL
    buf = growcat(buf, &buflen, 1, " -lssl -lcrypto");
@@ -347,8 +351,10 @@ Deliberate Syntax Error
 
 #ifndef HAVE_SYS_WAIT_H
    // FIXME: this is a quick hack to solve iconc build on Windows
+#ifndef WEXITSTATUS
 #define WEXITSTATUS(wstat)    (((wstat) >> 8) & 0xff)
-#endif
+#endif                  /* !WEXITSTATUS */
+#endif                  /* !HAVE_SYS_WAIT_H */
 
    /*
     * FIXME: Man page says this about WEXITSTATUS
