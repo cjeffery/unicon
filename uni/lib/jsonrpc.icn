@@ -31,14 +31,16 @@
 #  In case of an error, and error objet should bre returned.
 #
 
-package ulsp
-import json
+package json
 link ximage
 
 $define CONTENT_LENGTH "Content-Length: "
 
+# JRPC_Message is a class that represents a JSON-RPC message
+# It is used to parse the JSON-RPC message and to create the JSON-RPC message
 class JRPC_Message(msg, kind, json_table)
 
+   # Parse the JSON-RPC message and set the kind of the message
    method parse_json(s)
       msg := s
       if json_table := jtou(s) then {
@@ -48,6 +50,7 @@ class JRPC_Message(msg, kind, json_table)
          kind := "unknown"
    end
 
+   # Guess the kind of the message based on the JSON-RPC message
    method guess_kind()
       #if we have a method, the msg is a request
       if \json_table["method"] then
@@ -58,52 +61,68 @@ class JRPC_Message(msg, kind, json_table)
          kind := "response"
       else
          kind := "unknown"
+
+      return kind
    end
 
+   # Get the JSON RPC kind of the message
    method get_kind()
       return kind
    end
+   # Get the JSON RPC id of the message
    method get_id()
       return json_table["id"]
    end
+   # Get the JSON RPC method of the message
    method get_method()
       return json_table["method"]
    end
+   # Get the JSON RPC params of the message
    method get_params()
       return json_table["params"]
    end
    # many requests operate on a file, stored in uri param
+   # used by ulsp server to get the file path
    method get_param_uri()
       return json_table["params"]["textDocument"]["uri"]
    end
 
+   # Get the result of returned by a json rpc request
    method get_result()
       return json_table["result"]
    end
+   # Get the error of returned by a json rpc request
    method get_error()
       return json_table["error"]
    end
+   # Get the raw message content
    method get_content()
       return msg
    end
 
+   # Initialize the JSON RPC message
    method init_msg()
       /json_table := ["jsonrpc" : "2.0"]
    end
 
+   # Set the result of the JSON RPC message
    method set_result(result)
       json_table["result"] := result
    end
+   # Set the id of the JSON RPC message
    method set_id(id)
       return json_table["id"] := id
    end
+   # Set the method of the JSON RPC message
    method set_method(meth)
       return json_table["method"] := meth
    end
+   # Set the params of the JSON RPC message
    method set_params(params)
       return json_table["params"] := params
    end
 
+   # Make a result response JSON RPC message
    method make_result_response(result)
       delete(json_table, "method", "params", "error")
       json_table["result"] := \result | ""
@@ -111,6 +130,7 @@ class JRPC_Message(msg, kind, json_table)
          return self
    end
 
+   # Make a request JSON RPC message
    method make_request(id, meth, params)
       if /json_table then
          json_table := [
@@ -176,6 +196,7 @@ class JRPC_Message(msg, kind, json_table)
    #
    # RequestCancelled: -32800;
 
+   # Make an error response JSON RPC message
    method make_error_response(err_code, err_msg, err_data)
       delete(json_table, "method", "params", "result")
       json_table["error"] := [
@@ -187,6 +208,7 @@ class JRPC_Message(msg, kind, json_table)
          return self
    end
 
+   # Initialize the JSON RPC message
    initially
       kind := "unknown"
 end
@@ -227,6 +249,7 @@ class JRPC_HTTPSocket(sock)
       }
    end
 
+   # Get the data from the socket
    method get_data(size, timeout)
       local data := ""
       /timeout := -1
@@ -238,6 +261,7 @@ class JRPC_HTTPSocket(sock)
          return data
    end
 
+   # Get the JSON RPC message from the socket
    method get_msg(timeout)
       local msg_body, len
       len := get_http_header(timeout) | fail
@@ -247,12 +271,14 @@ class JRPC_HTTPSocket(sock)
       }
    end
 
+   # Send the JSON RPC message to the socket
    method send_msg(msg)
       local data
       data := msg.get_content()
       writes(sock, CONTENT_LENGTH, *data, "\r\n\r\n", data)
    end
 
+   # Initialize the JSON RPC HTTPSocket
    initially(addr, opt)
       if string(addr) then
          sock := open(addr,opt)
