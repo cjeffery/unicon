@@ -11,6 +11,7 @@ package ulsp
 link ximage
 link strings
 import json
+import logger
 #import UniDoc
 
 
