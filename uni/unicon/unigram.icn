@@ -2646,7 +2646,7 @@ procedure init_stacks()
   every i := 1 to 1000 do action[i] := proc("action_" || i)
 end
 
-#line 936 "unigram.y"
+#line 937 "unigram.y"
 
 #
 # This procedure parenthesizes the right-hand side of an expression,
@@ -4725,42 +4725,42 @@ procedure action_277()
 end
 
 procedure action_282()
-#line 803 "unigram.y"
+#line 804 "unigram.y"
  yyval := regexp(valstk[1]) 
 end
 
 procedure action_283()
-#line 804 "unigram.y"
- yyval := "emptyregex" 
+#line 805 "unigram.y"
+ yyval := "\"\"" 
 end
 
 procedure action_285()
-#line 809 "unigram.y"
+#line 810 "unigram.y"
  yyval := node("regexbar", valstk[3], valstk[2], valstk[1]) 
 end
 
 procedure action_287()
-#line 813 "unigram.y"
+#line 814 "unigram.y"
  yyval := node("regexconcat", valstk[2], valstk[1]) 
 end
 
 procedure action_289()
-#line 817 "unigram.y"
+#line 818 "unigram.y"
  yyval := node("kleene", valstk[2], valstk[1]) 
 end
 
 procedure action_290()
-#line 818 "unigram.y"
+#line 819 "unigram.y"
  yyval := node("oneormore", valstk[2], valstk[1]) 
 end
 
 procedure action_291()
-#line 819 "unigram.y"
+#line 820 "unigram.y"
  yyval := node("optional", valstk[2], valstk[1]) 
 end
 
 procedure action_292()
-#line 820 "unigram.y"
+#line 821 "unigram.y"
 
            if valstk[2].s < 0 then {
               yyerror("regex occurrences may not be negative")
@@ -4781,27 +4781,27 @@ procedure action_292()
 end
 
 procedure action_294()
-#line 840 "unigram.y"
- yyval := valstk[1]; yyval.tok := IDENT 
-end
-
-procedure action_295()
 #line 841 "unigram.y"
  yyval := valstk[1]; yyval.tok := IDENT 
 end
 
-procedure action_296()
+procedure action_295()
 #line 842 "unigram.y"
  yyval := valstk[1]; yyval.tok := IDENT 
 end
 
+procedure action_296()
+#line 843 "unigram.y"
+ yyval := valstk[1]; yyval.tok := IDENT 
+end
+
 procedure action_302()
-#line 848 "unigram.y"
+#line 849 "unigram.y"
  yyval := node("Paren",valstk[3],valstk[2],valstk[1]) 
 end
 
 procedure action_303()
-#line 849 "unigram.y"
+#line 850 "unigram.y"
 
               yyval := node("acset", valstk[3], valstk[2], valstk[1])
               if type(valstk[2]) == "token" then {
@@ -4816,17 +4816,17 @@ procedure action_303()
 end
 
 procedure action_304()
-#line 860 "unigram.y"
+#line 861 "unigram.y"
  yyval := node("notany", valstk[4], valstk[3], valstk[2], valstk[1]) 
 end
 
 procedure action_305()
-#line 861 "unigram.y"
+#line 862 "unigram.y"
  yyval := node("escape", valstk[2], valstk[1]) 
 end
 
 procedure action_307()
-#line 865 "unigram.y"
+#line 866 "unigram.y"
 
            # sometimes a MINUS is just a MINUS
 	   if type(valstk[1]) == "treenode" then {
@@ -4844,12 +4844,12 @@ procedure action_307()
 end
 
 procedure action_308()
-#line 879 "unigram.y"
+#line 880 "unigram.y"
  yyval := node("brackchars", valstk[3], valstk[2], valstk[1]) 
 end
 
 procedure action_309()
-#line 880 "unigram.y"
+#line 881 "unigram.y"
 
   #
   # build yyval result that is a token with yyval.s being the cset
@@ -4874,7 +4874,7 @@ procedure action_309()
 end
 
 procedure action_315()
-#line 904 "unigram.y"
+#line 905 "unigram.y"
  # ordinary escape char
            yyval := valstk[1]
            yyval.column := valstk[2].column
@@ -4886,7 +4886,7 @@ procedure action_315()
 end
 
 procedure action_316()
-#line 912 "unigram.y"
+#line 913 "unigram.y"
  #escaped octal?
            yyval := valstk[1]
            yyval.column := valstk[2].column
@@ -4898,22 +4898,22 @@ procedure action_316()
 end
 
 procedure action_317()
-#line 922 "unigram.y"
+#line 923 "unigram.y"
  yyval := node("section", valstk[6],valstk[5],valstk[4],valstk[3],valstk[2],valstk[1]) 
 end
 
 procedure action_322()
-#line 929 "unigram.y"
+#line 930 "unigram.y"
  yyval := node("compound", valstk[3],";",valstk[1]) 
 end
 
 procedure action_324()
-#line 932 "unigram.y"
+#line 933 "unigram.y"
  yyval := node("error", valstk[4],valstk[2],valstk[1]) 
 end
 
 procedure action_325()
-#line 933 "unigram.y"
+#line 934 "unigram.y"
  yyval := node("error") 
 end
 

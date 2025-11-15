@@ -801,8 +801,9 @@ literal : INTLIT ;
         | STRINGLIT ;
         | CSETLIT ;
 
+/* The empty string "\"\"", "" in generated code, serves as an empty regex */
 regex: neregex { $$ := regexp($1) }
-        |  { $$ := "emptyregex" }
+        |  { $$ := "\"\"" }
         ;
 
 /* nonempty regexp */
