@@ -373,22 +373,20 @@ class Server(
       formattingHandler := FormattingHandler()
    end
 
+   method connect()
+      local openopt := "n", mstring
 
-   initially
-      local openopt := "n", mstring := "server"
-
-      renewSymbols := 1
-      cacheSymbols := table()
       case mode of {
-         "s" : { openopt ||:= "a" }
-         "c" : { mstring := "client" }
-         default: { write("Unknown mode: " || mode) }
+         "s" : {
+            openopt ||:= "a"
+            mstring := "server"
+         }
+         "c" : {
+            mstring := "client"
+         }
+         default: { Logger.error("Unknown mode: " || mode) }
       }
 
-      \Logger | Logger(7) # default to informational
-
-      Logger.info("Loading Database...")
-      loadDB()
       Logger.info("Starting Unicon LSP in ", mstring, " mode at ", port)
       every 1 to 5 do {
          if sock := open(port, openopt) then
@@ -403,4 +401,12 @@ class Server(
          Logger.crit("Failed to establish connection on: ", port)
          exit(1)
       }
+   end
+
+   initially
+      renewSymbols := 1
+      cacheSymbols := table()
+      \Logger | Logger(7) # default to informational
+      Logger.info("Loading Database...")
+      loadDB()
 end
