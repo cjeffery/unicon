@@ -221,6 +221,12 @@ class Server(
       uri := request_params["textDocument"]["uri"]
       file_contents := request_params["contentChanges"][1]["text"]
       filehandler_object := openFiles[\uri]
+      # If file handler doesn't exist, create it (file might have been changed before didOpen)
+      if /filehandler_object then {
+         openFiles[\uri] := FileHandler(fname, lsp_database)
+         filehandler_object := openFiles[\uri]
+         filehandler_object.setFile()
+      }
       filehandler_object.updateUniDoc(fname, file_contents)
       filehandler_object.updateFileHandler()
    end
@@ -232,10 +238,19 @@ class Server(
    method completion(msg)
       local filehandler_object, result
       filehandler_object := openFiles[\msg.get_param_uri()]
+      if /filehandler_object then {
+         msg.make_error_response(-32602, "Invalid params", "File not open")
+         jrpc_handler.send_msg(msg)
+         return
+      }
       completionHandler.setVariables(filehandler_object, msg.get_params())
-      result := completionHandler.getResult()
-      msg.make_result_response(result)
-      jrpc_handler.send_msg(msg)
+      if result := completionHandler.getResult() then {
+         msg.make_result_response(result)
+         jrpc_handler.send_msg(msg)
+      } else {
+         msg.make_error_response(-32602, "Invalid params", "Missing required parameter: position")
+         jrpc_handler.send_msg(msg)
+      }
    end
 
 ########################################################
@@ -358,22 +373,20 @@ class Server(
       formattingHandler := FormattingHandler()
    end
 
+   method connect()
+      local openopt := "n", mstring
 
-   initially
-      local openopt := "n", mstring := "server"
-
-      renewSymbols := 1
-      cacheSymbols := table()
       case mode of {
-         "s" : { openopt ||:= "a" }
-         "c" : { mstring := "client" }
-         default: { write("Unknown mode: " || mode) }
+         "s" : {
+            openopt ||:= "a"
+            mstring := "server"
+         }
+         "c" : {
+            mstring := "client"
+         }
+         default: { Logger.error("Unknown mode: " || mode) }
       }
 
-      \Logger | Logger(7) # default to informational
-
-      Logger.info("Loading Database...")
-      loadDB()
       Logger.info("Starting Unicon LSP in ", mstring, " mode at ", port)
       every 1 to 5 do {
          if sock := open(port, openopt) then
@@ -388,4 +401,12 @@ class Server(
          Logger.crit("Failed to establish connection on: ", port)
          exit(1)
       }
+   end
+
+   initially
+      renewSymbols := 1
+      cacheSymbols := table()
+      \Logger | Logger(7) # default to informational
+      Logger.info("Loading Database...")
+      loadDB()
 end
